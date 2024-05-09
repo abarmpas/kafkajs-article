@@ -1,18 +1,32 @@
-import { test, expect } from '@playwright/test';
+import { test } from '../src/fixtures/base.fixture';
+import { expect } from '@playwright/test';
+import { createUserMessage } from '../src/utils/kafkaClient';
 
-test('has title', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
+test.describe('Create User with Kafka Journey - E2E', () => {
 
-  // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle(/Playwright/);
-});
+  test.beforeEach(async ({ basePage }) => {
+    await test.step('GIVEN: I navigate to base page', async () => {
+      await basePage.open();
+    });
+  });
 
-test('get started link', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
+  test.afterEach(async () => {
+    await test.step('CLEANUP: Newly created users should be delete', async () => {
+      // delete users via API for example
+    });
+  });
 
-  // Click the get started link.
-  await page.getByRole('link', { name: 'Get started' }).click();
+  test('Should be able to create a User via kafka', async ({ basePage, kafkaClient }) => {
+    // Generate the User Message for kafka
+    const create_user_message = createUserMessage();
 
-  // Expects page to have a heading with the name of Installation.
-  await expect(page.getByRole('heading', { name: 'Installation' })).toBeVisible();
+    await test.step('AND: A new User is created', async () => {
+      // Send Messages to kafka client
+      await kafkaClient.sendMessages('kafka-topic', [
+        JSON.stringify(create_user_message),
+      ]);
+
+      // According to the backend, here a waiting functionality can be implemented until the user is visible
+    });
+  });
 });
